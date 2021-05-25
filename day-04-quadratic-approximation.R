@@ -14,7 +14,7 @@ d2 <- d %>%
 m4.1 <- quap(
   alist(
     height ~ dnorm( mu, sigma ),
-    mu ~ dnorm( mean=167, sd = 10 ),
+    mu ~ dnorm( mean=167, sd = 0.5 ),
     sigma ~ dunif( 0 , 20 )
   ),
   data = d2
