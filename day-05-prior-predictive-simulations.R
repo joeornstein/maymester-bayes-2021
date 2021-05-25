@@ -56,3 +56,19 @@ for ( i in 1:100 ) {
          from=0 , to=1 , add=TRUE ,
          col=col.alpha("black",0.2) )
 }
+
+## Prior Predictive Simulations (Stewart, Colt, Mel, Elise) --------
+
+alpha <- rnorm(1e6, mean=20, sd=5)
+beta <- runif(1e6, -0.5, 0.5) # TO BE DETERMINED!!!
+
+# plot a few of those prior predictions
+plot( NULL , xlim=0:1 , ylim=c(0,100) ,
+      xlab="GDP Per Capita PPP (Standardized in some way)" , ylab="CPI Score" )
+abline( h=mimimum_cpi , lty=2 )
+abline( h=maximum_cpi , lty=1 , lwd=0.5 )
+for ( i in 1:100 ) {
+  curve( alpha[i] + beta[i]*x ,
+         from=0 , to=1 , add=TRUE ,
+         col=col.alpha("black",0.2) )
+}
