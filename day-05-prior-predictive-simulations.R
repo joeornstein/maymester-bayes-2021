@@ -23,15 +23,13 @@ maximum_gdp <- max(d$gdp_per_capita)
 maximum_cpi <- max(d$cpi_score)
 mimimum_cpi <- min(d$cpi_score)
 
-## Prior predictive simulations --------------------
+## Prior predictive simulations (Ally, Abdullah, Jason) --------------------
 
 # draw random values from our proposed priors
-alpha <- rnorm(1e6, mean=15, sd=3)
-beta <- rnorm(1e6, mean=0, sd=1)
+alpha <- rnorm(1e6, mean=40, sd=6)
+beta <- rnorm(1e6, mean=0, sd=0.0002)
 
-# create a dataframe for dummy data
-# gdp_seq <- seq(minimum_gdp, maximum_gdp, length.out = 100)
-
+# plot a few of those prior predictions
 plot( NULL , xlim=range(d$gdp_per_capita) , ylim=c(0,100) ,
       xlab="GDP Per Capita PPP" , ylab="CPI Score" )
 abline( h=mimimum_cpi , lty=2 )
@@ -43,4 +41,18 @@ for ( i in 1:100 ) {
 }
 
 
+## Prior predictive simulations (Jay, Brad, Zach) ---------------
 
+alpha <- rnorm(1e6, mean=30, sd=3)
+beta <- rnorm(1e6, mean=0, sd=0.1)
+
+# plot a few of those prior predictions
+plot( NULL , xlim=0:1 , ylim=c(0,100) ,
+      xlab="GDP Per Capita PPP (Zero-One Standardized)" , ylab="CPI Score" )
+abline( h=mimimum_cpi , lty=2 )
+abline( h=maximum_cpi , lty=1 , lwd=0.5 )
+for ( i in 1:100 ) {
+  curve( alpha[i] + beta[i]*x ,
+         from=0 , to=1 , add=TRUE ,
+         col=col.alpha("black",0.2) )
+}
