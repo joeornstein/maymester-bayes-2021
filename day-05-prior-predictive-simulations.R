@@ -47,7 +47,7 @@ for ( i in 1:100 ) {
 ## Prior predictive simulations (Jay, Brad, Zach) ---------------
 
 alpha <- rnorm(1e6, mean=30, sd=3)
-beta <- rnorm(1e6, mean=0, sd=0.1)
+beta <- rnorm(1e6, mean=0, sd=20)
 
 # plot a few of those prior predictions
 plot( NULL , xlim=0:1 , ylim=c(0,100) ,
@@ -62,16 +62,16 @@ for ( i in 1:100 ) {
 
 ## Prior Predictive Simulations (Stewart, Colt, Mel, Elise) --------
 
-alpha <- rnorm(1e6, mean=20, sd=5)
-beta <- runif(1e6, -0.5, 0.5) # TO BE DETERMINED!!!
+alpha <- rnorm(1e6, mean=10, sd=5)
+beta <- rnorm(1e6, 0.4, 0.15) / 1000
 
 # plot a few of those prior predictions
-plot( NULL , xlim=c(min_log_gdp, max_log_gdp) , ylim=c(0,100) ,
+plot( NULL , xlim=c(minimum_gdp, maximum_gdp) , ylim=c(0,100) ,
       xlab="Log GDP Per Capita PPP" , ylab="CPI Score" )
 abline( h=mimimum_cpi , lty=2 )
 abline( h=maximum_cpi , lty=1 , lwd=0.5 )
 for ( i in 1:100 ) {
   curve( alpha[i] + beta[i]*x ,
-         from=min_log_gdp , to=max_log_gdp , add=TRUE ,
+         from=minimum_gdp , to=maximum_gdp , add=TRUE ,
          col=col.alpha("black",0.2) )
 }
