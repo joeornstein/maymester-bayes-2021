@@ -20,6 +20,9 @@ d <- read_csv('data/cpi_gdp.csv') %>%
 minimum_gdp <- min(d$gdp_per_capita)
 maximum_gdp <- max(d$gdp_per_capita)
 
+min_log_gdp <- min(log(d$gdp_per_capita))
+max_log_gdp <- max(log(d$gdp_per_capita))
+
 maximum_cpi <- max(d$cpi_score)
 mimimum_cpi <- min(d$cpi_score)
 
@@ -63,12 +66,12 @@ alpha <- rnorm(1e6, mean=20, sd=5)
 beta <- runif(1e6, -0.5, 0.5) # TO BE DETERMINED!!!
 
 # plot a few of those prior predictions
-plot( NULL , xlim=0:1 , ylim=c(0,100) ,
-      xlab="GDP Per Capita PPP (Standardized in some way)" , ylab="CPI Score" )
+plot( NULL , xlim=c(min_log_gdp, max_log_gdp) , ylim=c(0,100) ,
+      xlab="Log GDP Per Capita PPP" , ylab="CPI Score" )
 abline( h=mimimum_cpi , lty=2 )
 abline( h=maximum_cpi , lty=1 , lwd=0.5 )
 for ( i in 1:100 ) {
   curve( alpha[i] + beta[i]*x ,
-         from=0 , to=1 , add=TRUE ,
+         from=min_log_gdp , to=max_log_gdp , add=TRUE ,
          col=col.alpha("black",0.2) )
 }
