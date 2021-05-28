@@ -112,4 +112,84 @@ dens(difference)
 # posterior interval
 PI(difference, prob = 0.95)
 
+# probability that the difference is negative
+sum(difference < 0) / length(difference) # ZERO
 
+## Question 1: Heteroskedasticity? --------------------
+
+# draw 10,000 samples from the posterior, estimate mu and simulate CPI
+mu <- link( m2, d )
+simulated_cpi <- sim( m2, d )
+
+d %>% 
+  mutate(prediction = apply(mu, 2, mean),
+         residual = cpi_score - prediction) %>% 
+  ggplot() +
+  # add residual points
+  geom_point(mapping = aes(x=log_gdp_demeaned, y = residual)) +
+  # make it pretty
+  theme_bw() +
+  labs(title = 'Prediction Errors',
+       y = 'Residual',
+       x = 'Log GDP Per Capita (Demeaned)') +
+  # add zero line
+  geom_hline(yintercept = 0, linetype = 'dashed')
+  
+## Question 2: Confounding? ------------------
+
+# does conditioning on regime type attenuate the correlation between
+# GDP per capita and CPI?
+
+# previous model
+summary(m1)
+
+# new model
+summary(m2)
+
+# how confident are we that beta is positive?
+posterior <- extract.samples(m2)
+sum(posterior$b < 0) / length(posterior)
+
+## Plot the posterior predictive intervals -------------------
+
+mu <- link( m2, d )
+simulated_cpi <- sim( m2, d )
+
+p2 <- d %>% 
+  # add predictions and posterior intervals to dataframe
+  mutate(regime_type = if_else(democracy == 1, 'Democracy', 'Autocracy'),
+         prediction = apply(mu, 2, mean),
+         PI_lower = apply(mu, 2, PI, prob = 0.95)[1,],
+         PI_upper = apply(mu, 2, PI, prob = 0.95)[2,],
+         sim_lower = apply(simulated_cpi, 2, PI, prob = 0.95)[1,],
+         sim_upper = apply(simulated_cpi, 2, PI, prob = 0.95)[2,]) %>% 
+  ggplot() + 
+  # raw data
+  geom_point(mapping = aes(x=log_gdp_demeaned,
+                           y=cpi_score,
+                           color = regime_type),
+             alpha = 0.5) +
+  # MAP (mean posterior estimate of mu)
+  geom_line(mapping = aes(x = log_gdp_demeaned,
+                          y = prediction,
+                          color = regime_type)) +
+  # Add posterior interval around mu (uncertainty re: mu)
+  geom_ribbon(mapping = aes(x = log_gdp_demeaned,
+                            ymax = PI_upper,
+                            ymin = PI_lower,
+                            fill = regime_type),
+              alpha = 0.5) +
+  # Add posterior predictive interval (uncertainty re: CPI)
+  geom_ribbon(mapping = aes(x = log_gdp_demeaned,
+                            ymax = sim_upper,
+                            ymin = sim_lower,
+                            fill = regime_type),
+              alpha = 0.2) +
+  # making it pretty
+  theme_bw() +
+  labs(title = 'Posterior Predictions of Corruption',
+       x = 'Log GDP Per Capita (Demeaned)',
+       y = 'Corruption Perceptions Index',
+       color = 'Regime Type',
+       fill = 'Regime Type')
+p2
