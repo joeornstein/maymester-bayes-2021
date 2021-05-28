@@ -193,3 +193,18 @@ p2 <- d %>%
        color = 'Regime Type',
        fill = 'Regime Type')
 p2
+
+
+## What would the frequentist model tell us? -----------------
+
+# bayesian linear regression gave us these posteriors
+precis(m2, depth = 2)
+
+
+# frequentist model w/ lm()
+lm1 <- lm(cpi_score ~ log_gdp_demeaned + 
+            log_gdp_demeaned2 + log_gdp_demeaned3 +
+            factor(democracy),
+          data = d)
+summary(lm1)
+
