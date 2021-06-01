@@ -2,7 +2,7 @@
 
 library(rethinking)
 
-# generate the leg data
+## generate the leg data -----------------
 N <- 100 # number of individuals
 # set.seed(909)
 height <- rnorm(N,10,2)# sim total height of each
@@ -14,8 +14,8 @@ leg_right <- leg_prop*height +    # sim right leg as proportion + error
 # combine into data frame
 d <- data.frame(height,leg_left,leg_right)
 
+## estimate a model with one leg as predictor ---------------------
 
-# estimate a model with one leg as predictor
 m1 <- quap(
   alist(
     height ~ dnorm(mu, sigma),
@@ -28,7 +28,8 @@ m1 <- quap(
 
 summary(m1)
 
-# estimate a model with *both* legs as predictors
+## estimate a model with *both* legs as predictors --------------
+
 m2 <- quap(
   alist(
     height ~ dnorm(mu, sigma),
