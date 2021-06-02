@@ -1,0 +1,62 @@
+---
+title: "Summary Tables from `rethinking`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(rethinking)
+```
+
+## Fit the Model
+
+First we load the data.
+
+```{r load data}
+# load the data
+data(rugged)
+d <- rugged
+
+# clean it up
+dd <- d %>% 
+  filter(!is.na(rgdppc_2000)) %>% 
+  mutate(log_gdp = log(rgdppc_2000),
+         log_gdp_std = log_gdp / mean(log_gdp),
+         rugged_std = rugged / max(rugged),
+         rugged_std = rugged_std - mean(rugged_std))
+
+# add our index variable for continent
+dd <- dd %>% 
+  mutate(cid = if_else(cont_africa == 1, 1, 2))
+```
+
+Then we fit a model with varying slopes.
+
+```{r fit model}
+m1 <- quap(
+  alist(
+    log_gdp_std ~ dnorm( mu , sigma ) ,
+    mu <- a[cid] + b[cid]*rugged_std ,
+    a[cid] ~ dnorm( 1 , 0.1 ) ,
+    b[cid] ~ dnorm( 0 , 0.3 ) ,
+    sigma ~ dexp( 1 )
+  ), data = dd
+)
+```
+
+## Summary Table
+
+To produce a nicely formatted summary table, try this.
+
+```{r summary table, message=FALSE, warning=FALSE, results='asis'}
+
+library(xtable)
+library(knitr)
+precis(m1, depth = 2) %>% 
+  # convert it to a latex table
+  xtable %>% 
+  # convert that latex table to html (remove if your output is a pdf)
+  kable
+
+```
