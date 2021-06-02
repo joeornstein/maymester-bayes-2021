@@ -143,3 +143,46 @@ p2 <- d %>%
        color = 'Regime Type',
        fill = 'Regime Type')
 p2
+
+
+## Overthinking: Plot the difference in slopes (derivatives) ----------------
+
+# Partial derivative wrt log gdp per capita
+# d mu / dX =  b[regime] + 2*b2[regime]*X + 3*b3[regime]*X^2
+
+# create a function to compute the derivative
+derivative <- function(b1, b2, b3, X){
+  return(b1 + 2*b2*X + 3*b3*X^2)
+}
+
+# draw samples from the posterior
+samples <- extract.samples(m2)
+
+# compute the derivative for democracies at average log gdp per capita (0)
+slope_democracies <- derivative(b1 = samples$b[,2], 
+                                b2 = samples$b2[,2],
+                                b3 = samples$b3[,2],
+                                X = 0)
+# and for autocracies
+slope_autocracies <- derivative(b1 = samples$b[,1], 
+                                b2 = samples$b2[,1],
+                                b3 = samples$b3[,1],
+                                X = 0)
+
+# plot the difference
+dens(slope_autocracies - slope_democracies) # large difference for average wealth countries
+
+
+# now for poor countries (log_gdp_std = -2)
+slope_democracies <- derivative(b1 = samples$b[,2], 
+                                b2 = samples$b2[,2],
+                                b3 = samples$b3[,2],
+                                X = -2)
+# and for autocracies
+slope_autocracies <- derivative(b1 = samples$b[,1], 
+                                b2 = samples$b2[,1],
+                                b3 = samples$b3[,1],
+                                X = -2)
+
+# plot the difference
+dens(slope_autocracies - slope_democracies) # no difference in slope for poor countries
