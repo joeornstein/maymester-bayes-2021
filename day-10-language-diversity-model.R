@@ -84,7 +84,7 @@ summary(m2)
 samples <- extract.samples(m2)
 sum(samples$bMS > 0) / length(samples$bMS)
 
-## Plot the posterior predictions (triptych ggplot) -------------------
+## Plot the posterior predictions (triptych ggplot) --------------------------------------
 
 d <- d %>% 
   # create variables that split M and S into three categories by quantile
@@ -112,7 +112,8 @@ p1 <- ggplot(data = d,
   theme_bw() +
   labs(title = 'Modeling Language Diversity',
        x = 'Mean Growing Season (centered)',
-       y = 'Log Languages Per Capita')
+       y = 'Log Languages Per Capita',
+       caption = 'Lines are drawn from the posterior, holding other covariates at their means within each bin')
 
 
 # plot the raw data (faceted by mean growing season)
@@ -123,7 +124,52 @@ p2 <- ggplot(data = d,
   theme_bw() +
   labs(title = 'Modeling Language Diversity',
        x = 'Standard Deviation of Growing Season (centered)',
-       y = 'Log Languages Per Capita')
+       y = 'Log Languages Per Capita',
+       caption = 'Lines are drawn from the posterior, holding other covariates at their means within each bin')
 
 # add lines from the posterior
-mu <- link(m2, data = data.frame(M=))
+# man this is tricky, but here's what I would do:
+
+# get the average values of the predictor variables within each S_cat category 
+d2 <- d %>% 
+  group_by(S_cat) %>% 
+  summarize(S = mean(S),
+            A = mean(A))
+
+# get 10,000 samples from the posterior
+posterior <- extract.samples(m2)
+
+# for the first 200 samples, compute the slope and intercept, and add to the ggplot
+for(i in 1:200){
+  
+  d2 <- d2 %>% 
+    mutate(slope = posterior$bM[i] + posterior$bMS[i] * S, # dY/dM = bM + bMS*S
+           intercept = posterior$a[i] + posterior$bA[i]*A + posterior$bS[i]*S)  # when M=0, mu = a + bA*A + bs*S
+  
+  # add to ggplot
+  p1 <- p1 + 
+    geom_abline(data = d2,
+                mapping = aes(slope = slope,intercept =intercept),
+                alpha = 0.05)
+}
+p1
+
+# and you could do the same thing for p2
+d2 <- d %>% 
+  group_by(M_cat) %>% 
+  summarize(M = mean(M),
+            A = mean(A))
+
+for(i in 1:200){
+  
+  d2 <- d2 %>% 
+    mutate(slope = posterior$bS[i] + posterior$bMS[i] * M, # dY/dS = bS + bMS*M
+           intercept = posterior$a[i] + posterior$bA[i]*A + posterior$bM[i]*M)  # when S=0, mu = a + bA*A + bM*M
+  
+  # add to ggplot
+  p2 <- p2 + 
+    geom_abline(data = d2,
+                mapping = aes(slope = slope,intercept =intercept),
+                alpha = 0.05)
+}
+p2
