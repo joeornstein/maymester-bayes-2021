@@ -8,8 +8,8 @@ library(tidyverse)
 
 N <- 1e3
 # X and Z are random normal
-X <- rnorm(N, 0, 2)
-Z <- rnorm(N, 0, 2)
+X <- rnorm(N, 2, 2)
+Z <- rnorm(N, 2, 2)
 
 # Y1 is a continuous variable = X + Z + epsilon
 Y1 <- X + Z + rnorm(N, 0 , 1)
