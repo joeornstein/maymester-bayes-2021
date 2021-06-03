@@ -84,7 +84,6 @@ p1
 
 ## Estimate (Cubic) Varying Slopes Model ------------------
 
-# start with linear version of the model
 m2 <- quap(
   alist(
     cpi_score ~ dnorm( mu, sigma ),

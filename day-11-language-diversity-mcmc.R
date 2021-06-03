@@ -60,4 +60,3 @@ pairs(m2)
 traceplot( m2 )
 # The chain started off in a weird place (thanks to our uninformative priors)
 # but it quickly converged
-
