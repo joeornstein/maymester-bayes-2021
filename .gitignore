@@ -40,3 +40,6 @@ vignettes/*.pdf
 
 # dross folder
 _dross/
+
+# folder with saved ulam() models
+models/

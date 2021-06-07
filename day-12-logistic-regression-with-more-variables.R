@@ -27,13 +27,23 @@ d <- read_csv('data/CCES-Train.csv') %>%
                        region == 'Northeast' ~ 2,
                        region == 'South' ~ 3,
                        region == 'West' ~ 4),
-         sex = if_else(gender == 'Female', 1, 2))
+         sex = if_else(gender == 'Female', 1, 2),
+         age = 2016 - birthyr,
+         A = scale(age), # normalized age
+         ed = case_when(educ == 'No HS' ~ 1,
+                       educ == 'High school graduate' ~ 2,
+                       educ == 'Some college' ~ 3,
+                       educ == '2-year' ~ 4,
+                       educ == '4-year' ~ 5,
+                       educ == 'Post-grad' ~ 6))
 
 # convert the data to a list for ulam()
 dat <- list(
   Y = d$Y, # outcome variable (Democratic vote in 2016)
   R = d$R, # index variable for region
-  sex = d$sex # index variable for sex
+  sex = d$sex, # index variable for sex
+  ed = d$ed, # index variable for education
+  A = d$A # age
 )
 
 
@@ -109,10 +119,51 @@ southern_men_prior <- inv_logit(priors$aR[,3] + priors$aS[,2])
 dens(southern_men_prior - southern_women_prior)
 
 
-## Plot posterior probabilities ------------------------------
+## FANCY Model ------------------------------------------
+
+# varying intercepts by region, sex and education.
+# effect of age depends on education
+
+# quap() it for a prior predictive simulation
+m3 <- quap(
+  alist(
+    Y ~ dbinom(1, p), # binomial likeliood
+    logit(p) <- aR[R] + aS[sex] + aE[ed] + bA[ed]*A,
+    aR[R] ~ dnorm(0, 0.2),
+    aS[sex] ~ dnorm(0, 0.2),
+    aE[ed] ~ dnorm(0, 0.1),
+    bA[ed] ~ dnorm(0, 0.5)
+  ), data = d
+)
+
+priors <- extract.prior(m3)
+
+# Prior prediction for Midwestern, college educated female of average age
+(priors$aR[,1] + priors$aS[,1] + priors$aE[,5] + priors$bA[,5]*0) %>% 
+  inv_logit %>% 
+  dens
+
+# now ulam() it
+m3 <- ulam(
+  alist(
+    Y ~ dbinom(1, p), # binomial likeliood
+    logit(p) <- aR[R] + aS[sex] + aE[ed] + bA[ed]*A,
+    aR[R] ~ dnorm(0, 0.2),
+    aS[sex] ~ dnorm(0, 0.2),
+    aE[ed] ~ dnorm(0, 0.1),
+    bA[ed] ~ dnorm(0, 0.5)
+  ), data = dat, chains = 1
+)
+
+# diagnostics!
+precis(m3, depth = 2)
+traceplot(m3)
+
+
+## Plot posterior probabilities from my fancy model ------------------------------
 
 # draw samples from the posterior
-posterior <- extract.samples(m1)
+posterior <- extract.samples(m3)
 
 # take the region-intercept samples
 posterior$aR %>% 
@@ -158,24 +209,71 @@ posterior$aS %>%
        y = NULL,
        fill = 'Sex')
 
+# triptych plot with varying slopes
+p1 <- d %>% 
+  filter(gender == 'Female',
+         region == 'South') %>% 
+  ggplot(mapping = aes( x=A , y=Y )) +
+  geom_jitter(alpha = 0.2) +
+  facet_grid(~educ) +
+  theme_bw() +
+  labs(title = 'Age and Democratic Voting',
+       x = 'Age (Normalized)',
+       y = 'Probability of Voting for Clinton in 2016',
+       caption = 'Curves are drawn from the posterior, region = South, gender = Female')
 
+# second data.frame with combinations of age and education
+d2 <- expand_grid(A = seq(-2,2,0.1),
+                  educ = unique(d$educ)) %>% 
+  mutate(ed = case_when(educ == 'No HS' ~ 1,
+                        educ == 'High school graduate' ~ 2,
+                        educ == 'Some college' ~ 3,
+                        educ == '2-year' ~ 4,
+                        educ == '4-year' ~ 5,
+                        educ == 'Post-grad' ~ 6),
+         R = 3,
+         sex = 1)
 
-# NOTE: Once you make your model more complex, you may choose some
-# other way to best plot your posterior fit
+# for the first 200 samples, compute the slope and intercept, and add to the ggplot
+p <- link(m3, data = d2)
+
+for(i in 1:200){
+  
+  d2 <- d2 %>% 
+    mutate(prediction = p[i,] %>% inv_logit)
+  
+  # add to ggplot
+  p1 <- p1 + 
+    geom_line(data = d2,
+                mapping = aes(x = A, y=prediction),
+                alpha = 0.2)
+}
+p1
+
 
 ## Predict the test set p_i + 95% posterior interval -----------------------
 
 # load and clean the test dataset the same way we did for the training set
 test <- read_csv('data/CCES-Test.csv') %>% 
   # reformat variables for model
-  mutate(# index variable for region
+  mutate(Y = democratic2016,
+         # index variable for region
          R = case_when(region == 'Midwest' ~ 1,
                        region == 'Northeast' ~ 2,
                        region == 'South' ~ 3,
-                       region == 'West' ~ 4))
+                       region == 'West' ~ 4),
+         sex = if_else(gender == 'Female', 1, 2),
+         age = 2016 - birthyr,
+         A = scale(age), # normalized age
+         ed = case_when(educ == 'No HS' ~ 1,
+                        educ == 'High school graduate' ~ 2,
+                        educ == 'Some college' ~ 3,
+                        educ == '2-year' ~ 4,
+                        educ == '4-year' ~ 5,
+                        educ == 'Post-grad' ~ 6))
 
 # use the link() function to get 10,000 samples of p for each observation
-posterior_p <- link(m1, data = test)
+posterior_p <- link(m3, data = test)
 
 # add predictions and posterior intervals to the test set
 test <- test %>% 
