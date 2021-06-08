@@ -54,7 +54,7 @@ big_model <- ulam(
     a10[military_service] ~ dnorm(0, 0.2),
     a11[investor] ~ dnorm(0, 0.2),
     a12[homeowner] ~ dnorm(0, 0.2)
-  ), data = dat, chains = 1, log_lik = TRUE
+  ), data = dat, chains = 1, iter = 3000, log_lik = TRUE
 )
 
 # save to disk
@@ -88,4 +88,34 @@ test <- test %>%
          PI_upper = apply(p, 2, PI, prob = 0.95)[2,])
 
 write_csv(test, path = 'data/CCES-Test-Predictions.csv')
+
+
+## Load and evaluate predictions -----------------------
+
+test <- read_csv('data/CCES-Test-Predictions.csv')
+
+# posterior interval for caseid 410524330
+test %>% 
+  filter(caseid == 410524330) %>% 
+  select(PI_lower, PI_upper)
+
+# compute deviance
+test <- test %>% 
+  mutate(probability = democratic2016 * p_democratic2016 +
+           (1 - democratic2016) * (1-p_democratic2016))
+
+# sum the log probabilities and multiply by -2
+sum(log(test$probability)) * -2
+
+# calibration plot
+test %>% 
+  ggplot(mapping = aes(x=p_democratic2016,
+                       y=democratic2016)) +
+  geom_jitter(alpha = 0.1) +
+  geom_smooth(se = FALSE) + 
+  geom_abline(intercept = 0, slope = 1, linetype = 'dashed') +
+  theme_bw() + 
+  labs(x = 'Predicted Probability of Voting Democratic',
+       y = 'Voted Democratic?')
+
 
