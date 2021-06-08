@@ -56,3 +56,33 @@ big_model <- ulam(
     a12[homeowner] ~ dnorm(0, 0.2)
   ), data = dat, chains = 1, log_lik = TRUE
 )
+
+# save to disk
+save(big_model, file = 'models/big_model.RData')
+
+
+## Diagnostics ----------------------------
+
+traceplot( big_model )
+
+# check on some of the posteriors
+plot(precis(big_model, depth = 2, pars = c('a1, a6, a8') ))
+
+
+
+## Append predictions to the test set --------------------------------
+
+test <- 'data/CCES-Test.csv' %>%
+  read_csv %>% 
+  mutate(race_original = race) %>% 
+  clean_CCES
+
+p <- link( big_model, test )
+
+test <- test %>% 
+  mutate(p_democratic2016 = apply(p, 2, mean),
+         PI_lower = apply(p, 2, PI, prob = 0.95)[1,],
+         PI_upper = apply(p, 2, PI, prob = 0.95)[2,])
+
+write_csv(test, path = 'data/CCES-Test-Predictions.csv')
+
