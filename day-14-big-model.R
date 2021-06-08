@@ -17,6 +17,25 @@ dat <- make_list_for_ulam(d)
 
 ## Prior predictive simulation ------------------------------
 
+hist(
+  inv_logit(
+    rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2) +
+      rnorm(1e5, 0, 0.2)
+  )
+)
+
+
+## Fit the big model -------------------------------
 
 big_model <- ulam(
   alist(
@@ -35,5 +54,5 @@ big_model <- ulam(
     a10[military_service] ~ dnorm(0, 0.2),
     a11[investor] ~ dnorm(0, 0.2),
     a12[homeowner] ~ dnorm(0, 0.2)
-  ), data = dat, chains = 1, sample_prior = TRUE # just sampling the prior!
+  ), data = dat, chains = 1, log_lik = TRUE
 )
