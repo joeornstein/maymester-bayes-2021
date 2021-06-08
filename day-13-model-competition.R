@@ -68,10 +68,22 @@ traceplot( model_HMC )
 # The problem is those priors. Let's do a prior predictive simulation...
 # the guts of their model is...
 # logit(p_democrat) = aF + aG + aE
-p_democrat <- inv_logit(rnorm(1e5, 2, 1) +
-                          rnorm(1e5, 1.5, 1) +
-                          rnorm(1e5, 10, 2.5))
+p_democrat <- inv_logit(rnorm(1e5, 0, 0.2) +
+                          rnorm(1e5, 0, 0.2) +
+                          rnorm(1e5, 0, 0.2))
 dens(p_democrat)
+
+# plot prior on difference between men and women
+prior_aF <- rnorm(1e5, 0, 0.2)
+prior_aE <- rnorm(1e5, 0, 0.2)
+prior_aG1 <- rnorm(1e5, 0, 0.2)
+prior_aG2 <- rnorm(1e5, 0, 0.2)
+
+prior_democrat_men <- inv_logit(prior_aF + prior_aE + prior_aG1)
+prior_democrat_women <- inv_logit(prior_aF + prior_aE + prior_aG2)
+
+# plot the difference between those two priors
+dens(prior_democrat_men - prior_democrat_women)
 
 # plot the logistic function, to get a sense for how log odds map onto probabilities
 plot(seq(-10,10,0.1), inv_logit(seq(-10,10,0.1)), type = 'l',
@@ -79,7 +91,40 @@ plot(seq(-10,10,0.1), inv_logit(seq(-10,10,0.1)), type = 'l',
 
 ## Challenge: redefine some sensible priors and refit the model ---------------
 
+model_HMC2 <- ulam(
+  alist(
+    Y ~ dbinom(1, p), # binomial likelihood
+    logit(p) <- aF[famincome_quart] + aG[gender_num] + aE[educ_num_v2],
+    aF[famincome_quart] ~ dnorm(0, 0.2),
+    aG[gender_num] ~ dnorm(0, 0.2),
+    aE[educ_num_v2] ~ dnorm(0, 0.2)
+  ), data = dat, chains = 1, iter = 5000, log_lik = TRUE
+)
 
+# save the model
+save(model_HMC2, file = 'models/model_HMC2.RData')
+
+# plot the posteriors
+plot(model_HMC2, depth = 2)
+
+precis(model_HMC2, depth = 2)
+
+traceplot( model_HMC2 )
+
+# try dropping a predictor and see how MCMC does
+# (worried about collinearity between income and education)
+model_HMC3 <- ulam(
+  alist(
+    Y ~ dbinom(1, p), # binomial likelihood
+    logit(p) <- aF[famincome_quart] + aG[gender_num],
+    aF[famincome_quart] ~ dnorm(0, 0.2),
+    aG[gender_num] ~ dnorm(0, 0.2)
+  ), data = dat, chains = 1, ter = 5000, log_lik = TRUE
+)
+
+save(model_HMC3, file = 'models/model_HMC3.RData')
+
+precis(model_HMC3, depth = 2)
 
 ## Here's a model from Sally & Mason -----------------------------
 
@@ -157,6 +202,114 @@ model_SM <- ulam(
 
 save(model_SM, 'models/model_SM.RData')
 
+# plot the priors for various groups
+p_democratic_male_unemployed_nochildren_straight <- inv_logit(rnorm(1e5, 0, 1.5))
+dens(p_democratic_male_unemployed_nochildren_straight)
 
-## Challenge: standardize age, use index variables, and write some sensible priors ---------------
+p_democratic_female_employed_children_LGBTQ <- inv_logit(rnorm(1e5, 0, 1.5) +
+                                                           rnorm(1e5, 0, 0.5) +
+                                                           rnorm(1e5, 0, 0.5) +
+                                                           rnorm(1e5, 0, 0.5) +
+                                                           rnorm(1e5, 0, 0.5))
+dens(p_democratic_female_employed_children_LGBTQ)
 
+
+p_democratic_female_employed_children_LGBTQ_40yo <- inv_logit(rnorm(1e5, 0, 1.5) +
+                                                           rnorm(1e5, 0, 0.5) +
+                                                           rnorm(1e5, 0, 0.5) +
+                                                           rnorm(1e5, 0, 0.5) +
+                                                           rnorm(1e5, 0, 0.5) +
+                                                             rnorm(1e5, 0, 0.5) * 40)
+dens(p_democratic_female_employed_children_LGBTQ_40yo)
+
+## Updated model ---------------------------------------------
+
+d <- read_csv('data/CCES-Train.csv') %>% 
+  # reformat variables for model
+  mutate(Y = democratic2016,
+         R = case_when(region == 'Midwest' ~ 1,
+                       region == 'Northeast' ~ 2,
+                       region == 'South' ~ 3,
+                       region == 'West' ~ 4),
+         A = scale(2018 - birthyr),
+         gender = case_when(gender == 'Female' ~ 1,
+                        gender == 'Male' ~ 2),
+         children = case_when(child18 == 'Yes' ~ 2,
+                       child18 == 'No' ~ 1),
+         employment = case_when(employ == 'Full-time' ~ 1,
+                        employ == 'Unemployed' ~ 2,
+                        employ == 'Retired' ~ 3,
+                        employ == 'Part-time' ~ 1,
+                        employ == 'Permanently disabled' ~ 2,
+                        employ == 'Other' ~ 2,
+                        employ == 'Homemaker' ~ 4,
+                        employ == 'Temporarily laid off' ~ 2,
+                        TRUE ~ 2),
+         Race = case_when (race == 'Black' ~ 1,
+                           race == 'White' ~ 2,
+                           race == 'Hispanic' ~ 3,
+                           race == 'Asian' ~ 4,
+                           race == 'Mixed' ~ 5,
+                           race == 'Other' ~ 6,
+                           TRUE ~ 6),
+         Educ = case_when (educ ==  'High school graduate' ~ 2,
+                           educ == 'Some college' ~ 3,
+                           educ == '2-year' ~ 4,
+                           educ == '4-year' ~ 5,
+                           educ == 'Post-grad' ~ 6,
+                           educ == 'No HS' ~ 1),
+         LGBTQ = case_when(sexuality == 'Heterosexual' ~ 1,
+                           sexuality == 'Gay' ~ 2,
+                           sexuality == 'Lesbian' ~ 2,
+                           sexuality == 'Bisexual' ~ 2,
+                           sexuality == 'Prefer not to say' ~ 2,
+                           sexuality == 'Other' ~ 2))
+
+# make it a nice list for ulam()
+dat <- list(
+  Y = d$Y,
+  R = d$R,
+  gender = d$gender,
+  A = as.numeric(d$A),
+  Educ = d$Educ,
+  children = d$children,
+  employment = d$employment,
+  Race = d$Race,
+  LGBTQ = d$LGBTQ
+)
+
+# prior predictive simulation
+(rnorm(1e5, 0, 0.2) + 
+    rnorm(1e5, 0, 0.2) + 
+    rnorm(1e5, 0, 0.2) + 
+    rnorm(1e5, 0, 0.2) + 
+    rnorm(1e5, 0, 0.2) + 
+    rnorm(1e5, 0, 0.2) + 
+    rnorm(1e5, 0, 0.2) + 
+    rnorm(1e5, 0, 0.2)) %>% 
+  inv_logit %>% 
+  dens
+
+model_SM2 <- ulam(
+  alist(
+    Y ~ dbinom(1, p), # binomial likelihood
+    logit(p) <- a1[R] + a2[gender] + b1[R]*A + a3[Educ] + a4[children] + a5[employment] + a6[Race] + a7[LGBTQ],
+    a1[R] ~ dnorm(0, 0.2),
+    a2[gender] ~ dnorm(0, .2),
+    b1[R] ~ dnorm(0, .2),
+    a3[Educ] ~ dnorm(0, .2),
+    a4[children] ~ dnorm(0, .2),
+    a5[employment] ~ dnorm(0, .2),
+    a6[Race] ~ dnorm(0, .2),
+    a7[LGBTQ] ~ dnorm(0, .2)
+  ), data = dat, chains = 1, log_lik=TRUE
+)
+
+# took about 6 minutes to fit
+
+# save the model
+save(model_SM2, file = 'models/model_SM2.RData')
+
+plot(model_SM2, depth = 2)
+
+traceplot( model_SM2 )
