@@ -72,6 +72,8 @@ plot(precis(big_model, depth = 2, pars = 'a8' ))
 plot(precis(big_model, depth = 2, pars = 'a10' ))
 plot(precis(big_model, depth = 2, pars = 'a12' ))
 
+WAIC( big_model )
+
 
 ## Append predictions to the test set --------------------------------
 
