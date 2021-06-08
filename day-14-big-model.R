@@ -66,8 +66,11 @@ save(big_model, file = 'models/big_model.RData')
 traceplot( big_model )
 
 # check on some of the posteriors
-plot(precis(big_model, depth = 2, pars = c('a1, a6, a8') ))
-
+plot(precis(big_model, depth = 2, pars = 'a1' ))
+plot(precis(big_model, depth = 2, pars = 'a6' ))
+plot(precis(big_model, depth = 2, pars = 'a8' ))
+plot(precis(big_model, depth = 2, pars = 'a10' ))
+plot(precis(big_model, depth = 2, pars = 'a12' ))
 
 
 ## Append predictions to the test set --------------------------------
