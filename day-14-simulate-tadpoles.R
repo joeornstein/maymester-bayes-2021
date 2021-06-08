@@ -61,7 +61,7 @@ traceplot( multilevel_model, 'a[2]' )
 
 plot(multilevel_model, depth = 2)
 
-## add posterior predictions to the dataframe
+## add posterior predictions to the dataframe -----------------------------
 
 # predicted probability from no pooling model
 no_pooling_posterior <- extract.samples(no_pooling_model)
