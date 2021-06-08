@@ -1,5 +1,7 @@
 ## Function to clean up CCES data
 
+library(tigris)
+
 clean_CCES <- function(d){
   d %>% 
     mutate(age_std = scale(2018 - birthyr), # standardize age
@@ -25,7 +27,13 @@ clean_CCES <- function(d){
                                  urbancity == 'City' ~ 4),
            military_service = if_else(milstat_5 == 'Never Served', 1, 2),
            investor = if_else(investor == 'Yes', 2, 1),
-           homeowner = if_else(ownhome == 'Own', 2, 1))
+           homeowner = if_else(ownhome == 'Own', 2, 1)) %>% 
+    # merge with state abbreviations
+    left_join(fips_codes %>% 
+                mutate(inputstate = as.numeric(state_code)) %>%
+                select(inputstate, abb = state) %>% 
+                unique,
+              by = 'inputstate')
 }
 
 make_list_for_ulam <- function(d){

@@ -82,25 +82,25 @@ test <- test %>%
 
 # Look at some predictions from a state with low sample size
 test %>% 
-  filter(state == 2) %>% 
+  filter(abb == 'AK') %>% 
   select(p_no_pooling, p_multilevel)
 
 # And with a large sample size
 test %>% 
-  filter(state == 5) %>% 
+  filter(abb == 'CA') %>% 
   select(p_no_pooling, p_multilevel)
 
 test %>%
   # compute the absolute difference between model predictions
   mutate(abs_difference = abs(p_no_pooling - p_multilevel)) %>% 
   # group by state
-  group_by(state) %>% 
+  group_by(abb) %>% 
   # get each state's sample size and the mean absolute difference between predictions
   summarize(sample_size = n(),
             mean_abs_difference = mean(abs_difference)) %>% 
   # plot it
   ggplot() +
-  geom_point(aes(x=sample_size, y=mean_abs_difference)) +
+  geom_text(aes(x=sample_size, y=mean_abs_difference, label = abb)) +
   theme_bw() +
   labs(x = 'Number of Respondents from State in CCES Test Set',
        y = 'Average Difference in Predictions')
