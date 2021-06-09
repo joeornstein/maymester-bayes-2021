@@ -52,8 +52,7 @@ stoptime - starttime # took about 26 minutes to fit
 
 precis(big_multilevel_model, depth = 2)
 
-traceplot(big_multilevel_model, pars = 'a3[1]')
-traceplot(big_multilevel_model, pars = 'a6[2]')
+traceplot(big_multilevel_model, pars = c('a3[1]', 'a6[2]'))
 
 plot(precis(big_multilevel_model, depth = 2, pars = 'a7'))
 

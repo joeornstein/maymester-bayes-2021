@@ -3,6 +3,7 @@
 library(tidyverse)
 library(readxl)
 library(janitor)
+library(countrycode) # note: play with this
 
 # load Corruption Perceptions Index
 # from: https://www.transparency.org/en/cpi/2020/
