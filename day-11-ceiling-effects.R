@@ -1,10 +1,13 @@
 ## Section 10.2.3 simulation
 
 library(tidyverse)
+library(rethinking)
+
+set.seed(42)
 
 # when X and Z both cause Y, but there's no backdoor path,
-# omitting Z can still bias your estimates, because Z pushes up 
-# Y until it hits the ceiling (1)
+# omitting Z can still bias your estimates in a logistic model, 
+# because Z pushes up  Y until it hits the ceiling (1)
 
 N <- 1e3
 # X and Z are random normal
