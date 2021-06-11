@@ -45,3 +45,9 @@ summary(m2)
 
 # note that when we omit Z, the coefficient X is biased, even though
 # there's no backdoor path!
+
+# Note: the good news seems to be that, no matter how I toy with the DGP,
+# omitting Z biases your X coefficient towards zero (the good kind of bias).
+# This makes sense - I think - because when you don't know Z, it appears that
+# X doesn't matter (no matter how low or high X is, it has no observable effect
+# on the outcome when Z is really high or really low.)
