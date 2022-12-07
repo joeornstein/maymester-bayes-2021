@@ -54,8 +54,8 @@ post$LL <- sapply( 1:nrow(post) , function(i)
 # multiply the prior and the likelihood 
 # (equivalent to adding log-likelihood and log-prior)
 post$prod <- post$LL + 
-  dnorm( post$mu , 167 , 2 , TRUE ) +
-  dunif( post$sigma , 0 , 20 , TRUE )
+  dnorm( post$mu , 167 , 2 , log = TRUE ) +
+  dunif( post$sigma , 0 , 20 , log = TRUE )
 
 # convert log-posterior to regular posterior
 post$prob <- exp( post$prod - max(post$prod) )
